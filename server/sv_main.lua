@@ -2,7 +2,7 @@ local db                = require 'modules.server.db'
 local config            = require 'configs.server'
 local prisonBreakcfg    = require 'configs.prisonbreak'
 local utils             = require 'modules.server.utils'
-local ox_inventory      = exports.ox_inventory
+-- local ox_inventory      = exports.ox_inventory
 local globalState       = GlobalState
 local confiscated       = {}
 
@@ -14,7 +14,9 @@ local function savePlayerJailTime(src)
     MySQL.insert.await(db.UPDATE_JAILTIME, { cid, jailTime })
 
     if confiscated[src] then
-        ox_inventory:ReturnInventory(src)
+        for _, item in pairs(confiscated[src]) do
+            exports['qs-inventory']:AddItem(src, item.name, item.amount, item.metadata or {})
+        end
         confiscated[src] = nil
     end
 end
@@ -61,14 +63,14 @@ RegisterNetEvent('xt-prison:server:removeItems', function()
     if confiscated[src] then return end
 
     local cid = getCharID(src)
-    local playerItems = ox_inventory:GetInventoryItems(src)
+    local playerItems = exports['qs-inventory']:GetInventory(src)
     local confiscatedItems = MySQL.scalar.await(db.GET_ITEMS, { cid })
 
     confiscatedItems = json.decode(confiscatedItems) or {}
 
     if next(playerItems) and not next(confiscatedItems) then -- Checks if player has items and confiscated table is empty
         MySQL.insert.await(db.CONFISCATE_ITEMS, { cid, json.encode(playerItems) })
-        ox_inventory:ClearInventory(src)
+        exports['qs-inventory']:ClearInventory(src)
 
         lib.notify(src, {
             title = locale('notify.confiscated'),
@@ -91,17 +93,17 @@ RegisterNetEvent('xt-prison:server:returnItems', function()
 
     if not confiscated[src] then return end
 
-    local prisonInventory = ox_inventory:GetInventoryItems(src) -- Get Prison Inventory
+    local prisonInventory = exports['qs-inventory']:GetInventory(src) -- Get Prison Inventory
     local confiscatedItems = MySQL.scalar.await(db.GET_ITEMS, { cid }) -- Get Confiscated Items
     confiscatedItems = json.decode(confiscatedItems) or {}
 
-    ox_inventory:ClearInventory(src) -- Clear Prison Inventory
+    exports['qs-inventory']:ClearInventory(src) -- Clear Prison Inventory
 
     Wait(100)
 
     if next(confiscatedItems) then -- Ensure table is not empty
         for slot, info in pairs(confiscatedItems) do
-            ox_inventory:AddItem(src, info.name, info.count, info.metadata)
+            exports['qs-inventory']:AddItem(src, info.name, info.count, info.metadata)
         end
 
         MySQL.query.await(db.CLEAR_CONFISCATED_ITEMS, { cid })
@@ -117,7 +119,7 @@ RegisterNetEvent('xt-prison:server:returnItems', function()
 
     for slot, info in pairs(prisonInventory) do -- Return some prison items
         if config.AllowedToKeepItems[info.name] then
-            ox_inventory:AddItem(src, info.name, info.count, info.metadata)
+            exports['qs-inventory']:AddItem(src, info.name, info.count, info.metadata)
         end
     end
 end)
@@ -145,11 +147,8 @@ end)
 
 -- Receive Canteen Meal --
 lib.callback.register('xt-prison:server:receiveCanteenMeal', function(source)
-    local food = config.CanteenMeal.food
-    local drink = config.CanteenMeal.drink
-    if ox_inventory:AddItem(source, food.item, food.count) and ox_inventory:AddItem(source, drink.item, drink.count) then
-        return true
-    end
+    exports['qs-inventory']:AddItem(source, 'tosti', 5)
+    exports['qs-inventory']:AddItem(source, 'water_bottle', 5)
     return false
 end)
 
