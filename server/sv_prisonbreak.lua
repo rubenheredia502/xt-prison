@@ -46,7 +46,7 @@ RegisterNetEvent('xt-prison:server:removePrisonbreakItems', function(success)
     local removedCount = 0
 
     for requiredItem, requiredCount in pairs(requiredItems) do
-        if exports.ox_inventory:RemoveItem(src, requiredItem, (requiredCount or 1)) then
+        if exports['qs-inventory']:RemoveItem(src, requiredItem, (requiredCount or 1)) then
             removedCount += 1
             if removedCount == #requiredItems then
                 break
