@@ -3,16 +3,16 @@ return {
 
     UnemployedJobName = 'unemployed',           -- Name of unemployed job (if remove job is enabled)
 
-    CanteenMeal = {                             -- Food & Drink received from canteen
-        food = {
-            item = 'burger',
-            count = 1
-        },
-        drink = {
-            item = 'water',
-            count = 1
-        }
-    },
+--    CanteenMeal = {                             -- Food & Drink received from canteen
+--        food = {
+--            item = 'burger',
+--            count = 1
+--        },
+--        drink = {
+--            item = 'water',
+--            count = 1
+--        }
+--    },
 
     AllowedToKeepItems = {                      --  Items found/received in prison that can be kept when released
         ['money'] = true
